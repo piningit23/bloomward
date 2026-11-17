@@ -231,6 +231,9 @@ export function updateWorld(world, dt, input, sound) {
   const p = world.player;
   world.time += dt;
   world.timePlayed += dt;
+  // The Glowbloom drinks sunlight: slow regen so chip damage is
+  // recoverable between engagements, but a real siege still kills it.
+  world.bloom.hp = Math.min(world.bloom.maxHp, world.bloom.hp + 2 * dt);
   if (world.bannerT > 0) world.bannerT -= dt;
   if (world.shake > 0) world.shake = Math.max(0, world.shake - dt * 26);
   if (world.comboTimer > 0) {
@@ -362,7 +365,7 @@ export function updateWorld(world, dt, input, sound) {
       dead = true;
     }
     if (!dead && dist(s.x, s.y, world.bloom.x, world.bloom.y) < s.radius + world.bloom.radius) {
-      hurtBloom(world, Math.round(s.damage * 0.75), sound);
+      hurtBloom(world, Math.round(s.damage * 0.5), sound);
       dead = true;
     }
     if (dead) world.enemyShots.splice(world.enemyShots.indexOf(s), 1);
