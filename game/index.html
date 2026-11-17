@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BLOOMWARD — Guard the Last Glowbloom</title>
+<link rel="icon" href="data:,">
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; background: #fdf6d8;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+  }
+  #stage { text-align: center; }
+  canvas {
+    display: block; background: #bfe8a8;
+    border-radius: 10px;
+    box-shadow: 0 0 0 4px #2f7a3d, 0 8px 40px rgba(47, 122, 61, 0.35);
+    cursor: crosshair; image-rendering: auto;
+  }
+  #keys {
+    color: #33502a; font-size: 13px; margin-top: 8px; font-weight: bold;
+    letter-spacing: 0.03em;
+  }
+  #keys b { color: #b3541e; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bloom" width="1280" height="720"></canvas>
+  <div id="keys"><b>WASD</b> fly &nbsp;·&nbsp; <b>Mouse</b> aim &nbsp;·&nbsp; <b>Hold click / Space</b> shoot pollen &nbsp;·&nbsp; <b>Shift</b> dash &nbsp;·&nbsp; <b>E</b> plant thorn trap &nbsp;·&nbsp; <b>P</b> pause &nbsp;·&nbsp; <b>M</b> sound</div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
