@@ -6,6 +6,7 @@ export class Input {
     this.mouseX = 640;
     this.mouseY = 300;
     this.mouseDown = false;
+    this.mousePressed = false; // edge: a fresh mousedown this frame
     this.pressed = new Set(); // edge-triggered keys, consumed each frame
     this.canvas = canvas;
 
@@ -24,7 +25,7 @@ export class Input {
       this.mouseY = (e.clientY - r.top) * (canvas.height / r.height);
     });
     canvas.addEventListener('mousedown', (e) => {
-      if (e.button === 0) this.mouseDown = true;
+      if (e.button === 0) { this.mouseDown = true; this.mousePressed = true; }
       this.mouseX = (e.clientX - canvas.getBoundingClientRect().left) * (canvas.width / canvas.getBoundingClientRect().width);
       this.mouseY = (e.clientY - canvas.getBoundingClientRect().top) * (canvas.height / canvas.getBoundingClientRect().height);
     });
@@ -35,7 +36,7 @@ export class Input {
   down(...names) { return names.some((n) => this.keys.has(n)); }
   wasPressed(...names) { return names.some((n) => this.pressed.has(n)); }
   firing() { return this.mouseDown || this.keys.has(' '); }
-  endFrame() { this.pressed.clear(); }
+  endFrame() { this.pressed.clear(); this.mousePressed = false; }
 
   // Test/autopilot hooks: pretend a key is held, or set the aim point.
   // A fresh press also lands in `pressed`, so edge-triggered actions

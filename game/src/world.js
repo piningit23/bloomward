@@ -52,6 +52,7 @@ export function resetRun(world) {
 
 export function startWave(world, n, sound) {
   const plan = wavePlan(n);
+  const bossKey = n === 5 ? 'queen' : n === 10 ? 'king' : null;
   world.wave = n;
   world.surge = plan.surge;
   world.spawnInterval = plan.interval;
@@ -60,10 +61,12 @@ export function startWave(world, n, sound) {
     for (let i = 0; i < count; i++) queue.push({ kind, elite: world.rng() < plan.eliteChance });
   }
   world.spawnQueue = shuffle(world.rng, queue);
+  // Boss waves thin the regulars so the boss itself is the threat,
+  // not an endless pile of adds on the Glowbloom.
+  if (bossKey) world.spawnQueue = world.spawnQueue.filter((_, i) => i % 3 !== 2);
   world.spawnTimer = 0.8;
   world.waveState = 'spawning';
   world.bossActive = null;
-  const bossKey = n === 5 ? 'queen' : n === 10 ? 'king' : null;
   if (bossKey) {
     const pos = edgeSpawn(world.rng, world.w, world.h, 40);
     const boss = spawnBoss(bossKey, pos.x, pos.y);
@@ -313,7 +316,8 @@ export function updateWorld(world, dt, input, sound) {
         e.y -= Math.sin(angleTo(p.x, p.y, e.x, e.y)) * 12;
       } else if (db < e.radius + world.bloom.radius + 2) {
         e.touchCd = 0.9;
-        hurtBloom(world, e.damage, sound);
+        // The flower is sturdier than the warden: bites hurt it less.
+        hurtBloom(world, Math.round(e.damage * 0.75), sound);
       }
     }
     // Thorn traps.
@@ -358,7 +362,7 @@ export function updateWorld(world, dt, input, sound) {
       dead = true;
     }
     if (!dead && dist(s.x, s.y, world.bloom.x, world.bloom.y) < s.radius + world.bloom.radius) {
-      hurtBloom(world, s.damage, sound);
+      hurtBloom(world, Math.round(s.damage * 0.75), sound);
       dead = true;
     }
     if (dead) world.enemyShots.splice(world.enemyShots.indexOf(s), 1);
@@ -396,8 +400,8 @@ export function updateWorld(world, dt, input, sound) {
   // --- Wave clear ---
   if (world.waveState === 'fighting' && world.enemies.length === 0) {
     world.waveState = 'clear';
-    p.hp = Math.min(p.maxHp, p.hp + 12);
-    world.bloom.hp = Math.min(world.bloom.maxHp, world.bloom.hp + 10);
+    p.hp = Math.min(p.maxHp, p.hp + 15);
+    world.bloom.hp = Math.min(world.bloom.maxHp, world.bloom.hp + 20);
     world.score += 100 * world.wave;
     if (world.wave >= WAVES_TOTAL) {
       world.state = 'victory';

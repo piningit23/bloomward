@@ -21,10 +21,10 @@ export const PLAYER = {
   critMult: 2,
 };
 
-export const BLOOM = { radius: 46, maxHp: 130 };
+export const BLOOM = { radius: 46, maxHp: 160 };
 
 export const DEW = {
-  trapCost: 6,
+  trapCost: 5,
   rerollCost: 8,
   trapMax: 6,
   trapRadius: 74,

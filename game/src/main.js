@@ -29,15 +29,30 @@ let titleT = 0;
 // --- Autopilot: plays the game with simple rules, for regression tests. ---
 function autopilot(dt) {
   const p = world.player;
+  if (world.state === 'victory' || world.state === 'gameover') {
+    // Let the end screen stand: release everything so the run is not
+    // instantly restarted by a held button.
+    input.fakeMouse(false);
+    for (const k of ['w', 'a', 's', 'd', 'shift', 'e', 'enter', ' ']) input.fakeKey(k, false);
+    return;
+  }
   if (world.state === 'title') { input.fakeKey('enter', true); return; }
   if (world.state === 'upgrade') {
-    // Take the first blessing (prefer damage / multishot when offered).
-    const idx = world.choices.findIndex((c) => c.id === 'twin' || c.id === 'heavy');
+    // Take the first blessing (prefer damage / multishot when offered,
+    // healing when hurt).
+    let idx = -1;
+    if (p.hp < 55) idx = world.choices.findIndex((c) => c.id === 'petal');
+    if (idx < 0 && world.bloom.hp < 60) idx = world.choices.findIndex((c) => c.id === 'salve');
+    if (idx < 0) idx = world.choices.findIndex((c) => c.id === 'twin' || c.id === 'heavy');
     chooseBlessing(world, idx >= 0 ? idx : 0, sound);
     return;
   }
   if (world.state !== 'playing') return;
-  const target = nearestEnemy(world, p.x, p.y, 700) || nearestEnemy(world, world.bloom.x, world.bloom.y, 900);
+  // When the Glowbloom is hurting, guard it first; otherwise hunt near us.
+  const guardBloom = world.bloom.hp < 60;
+  const target = guardBloom
+    ? nearestEnemy(world, world.bloom.x, world.bloom.y, 900) || nearestEnemy(world, p.x, p.y, 700)
+    : nearestEnemy(world, p.x, p.y, 700) || nearestEnemy(world, world.bloom.x, world.bloom.y, 900);
   if (!target) { input.fakeMouse(false); input.fakeKey('w', false); input.fakeKey('a', false); input.fakeKey('s', false); input.fakeKey('d', false); return; }
   // Keep ~260px from the target, between it and the bloom.
   const dx = target.x - p.x, dy = target.y - p.y;
@@ -73,6 +88,8 @@ function startRun() {
 }
 
 function frame(now) {
+  // One bad frame must never freeze the game: catch, log, keep looping.
+  try {
   const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
   last = now;
   titleT += dt;
@@ -122,7 +139,7 @@ function frame(now) {
     else if (input.wasPressed('2')) chooseBlessing(world, 1, sound);
     else if (input.wasPressed('3')) chooseBlessing(world, 2, sound);
     else if (input.wasPressed('r')) rerollChoices(world);
-    else if (input.mouseDown) {
+    else if (input.mousePressed) {
       // Click a card: cards are laid out by drawUpgrade.
       const cards = world.choices;
       const cw = 300, gap = 30;
@@ -135,18 +152,19 @@ function frame(now) {
           break;
         }
       }
-      input.mouseDown = false;
     }
   } else if (world.state === 'victory' || world.state === 'gameover') {
     drawWorld(ctx, world, world.time);
     drawEnd(ctx, world, world.state === 'victory');
-    if (input.wasPressed('enter', 'r') || input.mouseDown) {
-      input.mouseDown = false;
+    // Fresh inputs only: a button held since before the end screen
+    // appeared must not restart the run by itself.
+    if (input.wasPressed('enter', 'r') || input.mousePressed) {
       startRun();
     }
   }
 
   input.endFrame();
+  } catch (err) { console.error('bloomward frame error:', err); }
   requestAnimationFrame(frame);
 }
 

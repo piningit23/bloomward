@@ -142,9 +142,9 @@ function stepBoss(e, dt, world, ang, d) {
     world.shake = Math.max(world.shake, 5);
   }
   if (e.summonTimer <= 0) {
-    e.summonTimer = 6;
+    e.summonTimer = 8;
     const kind = e.kind === 'queen' ? 'mite' : 'wasp';
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const a = (i / 3) * Math.PI * 2 + e.wobble;
       world.enemies.push(spawnEnemy(kind, e.x + Math.cos(a) * 50, e.y + Math.sin(a) * 50, world.rng, false));
     }
