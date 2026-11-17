@@ -21,7 +21,7 @@ export const PLAYER = {
   critMult: 2,
 };
 
-export const BLOOM = { radius: 46, maxHp: 160 };
+export const BLOOM = { radius: 46, maxHp: 180 };
 
 export const DEW = {
   trapCost: 5,

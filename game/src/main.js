@@ -48,21 +48,35 @@ function autopilot(dt) {
     return;
   }
   if (world.state !== 'playing') return;
-  // When the Glowbloom is hurting, guard it first; otherwise hunt near us.
-  const guardBloom = world.bloom.hp < 60;
-  const target = guardBloom
-    ? nearestEnemy(world, world.bloom.x, world.bloom.y, 900) || nearestEnemy(world, p.x, p.y, 700)
-    : nearestEnemy(world, p.x, p.y, 700) || nearestEnemy(world, world.bloom.x, world.bloom.y, 900);
-  if (!target) { input.fakeMouse(false); input.fakeKey('w', false); input.fakeKey('a', false); input.fakeKey('s', false); input.fakeKey('d', false); return; }
-  // Keep ~260px from the target, between it and the bloom.
+  // Guard the Glowbloom: hunt the enemy nearest the flower, and stand
+  // between it and the threat so leaks get shot before they bite.
+  const target = nearestEnemy(world, world.bloom.x, world.bloom.y, 900)
+    || nearestEnemy(world, p.x, p.y, 700);
+  if (!target) {
+    input.fakeMouse(false);
+    // Drift back toward the flower while the meadow is quiet.
+    const bx = world.bloom.x - p.x, by = world.bloom.y - p.y;
+    const db = Math.hypot(bx, by) || 1;
+    if (db > 120) {
+      input.fakeKey('d', bx / db > 0.35);
+      input.fakeKey('a', bx / db < -0.35);
+      input.fakeKey('s', by / db > 0.35);
+      input.fakeKey('w', by / db < -0.35);
+    } else {
+      for (const k of ['w', 'a', 's', 'd']) input.fakeKey(k, false);
+    }
+    return;
+  }
   const dx = target.x - p.x, dy = target.y - p.y;
   const d = Math.hypot(dx, dy) || 1;
-  const bx = world.bloom.x - p.x, by = world.bloom.y - p.y;
-  const db = Math.hypot(bx, by) || 1;
-  let mx = 0, my = 0;
-  if (d > 300) { mx = dx / d; my = dy / d; }
-  else if (d < 170) { mx = -dx / d; my = -dy / d; }
-  if (db < 150) { mx += bx / db * 0.6; my += by / db * 0.6; }
+  // Guard point: 170px out from the bloom toward the threat.
+  const bdx = target.x - world.bloom.x, bdy = target.y - world.bloom.y;
+  const bd = Math.hypot(bdx, bdy) || 1;
+  const gx = world.bloom.x + (bdx / bd) * 170;
+  const gy = world.bloom.y + (bdy / bd) * 170;
+  let mx = (gx - p.x) / 200, my = (gy - p.y) / 200;
+  if (d > 340) { mx += (dx / d) * 0.7; my += (dy / d) * 0.7; }
+  if (d < 150) { mx -= (dx / d) * 0.7; my -= (dy / d) * 0.7; }
   // Do not drift off the meadow.
   if (p.x < 90) mx += 0.8; if (p.x > VIEW.w - 90) mx -= 0.8;
   if (p.y < 90) my += 0.8; if (p.y > VIEW.h - 90) my -= 0.8;
@@ -76,7 +90,7 @@ function autopilot(dt) {
   // Dash away when something is very close, plant a trap when the bloom is pressed.
   const close = nearestEnemy(world, p.x, p.y, 80);
   if (close && p.dashCd <= 0) input.fakeKey('shift', true); else input.fakeKey('shift', false);
-  if (world.dew >= 8 && nearestEnemy(world, world.bloom.x, world.bloom.y, 220)) {
+  if (world.dew >= 5 && nearestEnemy(world, world.bloom.x, world.bloom.y, 220)) {
     input.fakeKey('e', true);
   } else input.fakeKey('e', false);
 }
